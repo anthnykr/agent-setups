@@ -6,12 +6,6 @@ This repository contains small setups and helpers that I use with coding agents.
 
 Custom extensions for the PI Coding Agent live in the [`pi-extensions`](pi-extensions) folder:
 
-* [`study-commits.ts`](pi-extensions/study-commits.ts) - Interactive commit picker (`/study-commits`) that injects selected commit diffs plus current workspace file snapshots into the session.
-
-### Usage
-
-```
-/study-commits
-```
-
-Controls: ↑/↓ move, Space toggle, Enter confirm, Esc cancel.
+| Extension | Command | Description | Controls |
+| --- | --- | --- | --- |
+| [`study-commits.ts`](pi-extensions/study-commits.ts) | `/study-commits` | Interactive commit picker that injects selected commit diffs plus current workspace file snapshots into the session. | ↑/↓ move, Space toggle, Enter confirm, Esc cancel. |
