@@ -8,4 +8,4 @@ Custom extensions for the PI Coding Agent live in the [`pi-extensions`](pi-exten
 
 | Extension | Command | Description | Controls |
 | --- | --- | --- | --- |
-| [`study-commits.ts`](pi-extensions/study-commits.ts) | `/study-commits` | Interactive commit picker that injects selected commit diffs plus current workspace file snapshots into the session. | ↑/↓ move, Space toggle, Enter confirm, Esc cancel. |
+| [`study-commits.ts`](pi-extensions/study-commits.ts) | `/study-commits` | Interactive commit picker that injects selected commit diffs into the session (4k line cap total). | ↑/↓ move, Space toggle, Enter confirm, Esc cancel. |

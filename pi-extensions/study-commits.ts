@@ -1,18 +1,10 @@
-import {
-	BorderedLoader,
-	DEFAULT_MAX_BYTES,
-	DEFAULT_MAX_LINES,
-	formatSize,
-	truncateHead,
-} from "@mariozechner/pi-coding-agent";
+import { BorderedLoader } from "@mariozechner/pi-coding-agent";
 import type { ExecOptions, ExecResult, ExtensionAPI, Theme } from "@mariozechner/pi-coding-agent";
 import { Key, matchesKey, truncateToWidth } from "@mariozechner/pi-tui";
-import fs from "node:fs/promises";
-import path from "node:path";
 
 const MAX_COMMITS = 20;
 const MAX_VISIBLE = 12;
-const MAX_FILES_PER_COMMIT = 20;
+const MAX_DIFF_LINES = 4000;
 
 interface CommitInfo {
 	sha: string;
@@ -180,11 +172,12 @@ interface BuildCommitSectionOptions {
 	cwd: string;
 	exec: ExecFn;
 	signal?: AbortSignal;
+	remainingDiffLines: number;
 }
 
-interface ReadFileSnapshotOptions {
-	filePath: string;
-	cwd: string;
+interface BuildCommitSectionResult {
+	section: string;
+	diffLinesUsed: number;
 }
 
 const parseCommits = ({ output }: { output: string }): CommitInfo[] => {
@@ -206,78 +199,74 @@ const parseCommits = ({ output }: { output: string }): CommitInfo[] => {
 		.filter((commit): commit is CommitInfo => Boolean(commit));
 };
 
-const truncateSection = ({ label, content }: { label: string; content: string }): string => {
-	const result = truncateHead(content, {
-		maxLines: DEFAULT_MAX_LINES,
-		maxBytes: DEFAULT_MAX_BYTES,
-	});
+interface TruncateDiffResult {
+	text: string;
+	usedLines: number;
+	totalLines: number;
+	truncated: boolean;
+	omitted: boolean;
+}
 
-	if (!result.truncated) {
-		return result.content;
+const truncateDiffByLines = ({
+	content,
+	remainingLines,
+}: {
+	content: string;
+	remainingLines: number;
+}): TruncateDiffResult => {
+	const lines = content.split("\n");
+	const totalLines = lines.length;
+
+	if (remainingLines <= 0) {
+		return {
+			text: "[Diff omitted; line cap reached]",
+			usedLines: 0,
+			totalLines,
+			truncated: totalLines > 0,
+			omitted: true,
+		};
 	}
 
-	const notice = `[Truncated ${label}: ${result.outputLines}/${result.totalLines} lines (${formatSize(
-		result.outputBytes,
-	)}/${formatSize(result.totalBytes)})]`;
-
-	return `${result.content}\n\n${notice}`;
-};
-
-const readFileSnapshot = async ({ filePath, cwd }: ReadFileSnapshotOptions): Promise<string> => {
-	const absolutePath = path.join(cwd, filePath);
-	try {
-		const data = await fs.readFile(absolutePath, "utf8");
-		return truncateSection({ label: `file ${filePath}`, content: data });
-	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unknown error";
-		return `[Missing or unreadable file: ${filePath} (${message})]`;
+	if (totalLines <= remainingLines) {
+		return {
+			text: content,
+			usedLines: totalLines,
+			totalLines,
+			truncated: false,
+			omitted: false,
+		};
 	}
+
+	return {
+		text: lines.slice(0, remainingLines).join("\n"),
+		usedLines: remainingLines,
+		totalLines,
+		truncated: true,
+		omitted: false,
+	};
 };
 
-const buildCommitSection = async ({ commit, cwd, exec, signal }: BuildCommitSectionOptions): Promise<string> => {
+const buildCommitSection = async ({
+	commit,
+	cwd,
+	exec,
+	signal,
+	remainingDiffLines,
+}: BuildCommitSectionOptions): Promise<BuildCommitSectionResult> => {
 	const diffResult = await exec("git", ["show", "--stat", "--patch", "--no-color", commit.sha], {
 		cwd,
 		signal,
 	});
 
-	const diffOutput = diffResult.code === 0 ? diffResult.stdout : diffResult.stderr || diffResult.stdout;
-	const diffText = truncateSection({ label: `diff ${commit.shortSha}`, content: diffOutput });
+	const diffRaw = diffResult.code === 0 ? diffResult.stdout : diffResult.stderr || diffResult.stdout;
+	const diff = truncateDiffByLines({ content: diffRaw, remainingLines: remainingDiffLines });
+	const diffNotice = diff.truncated
+		? diff.omitted
+			? "_Diff omitted; line cap reached._"
+			: `_Diff truncated to ${diff.usedLines}/${diff.totalLines} lines (cap ${MAX_DIFF_LINES})._`
+		: "";
 
-	const filesResult = await exec(
-		"git",
-		["diff-tree", "--no-commit-id", "--name-only", "-r", commit.sha],
-		{ cwd, signal },
-	);
-	const filesOutput = filesResult.code === 0 ? filesResult.stdout : "";
-	const filePaths = filesOutput
-		.split("\n")
-		.map((line) => line.trim())
-		.filter((line) => line.length > 0);
-	const limitedFiles = filePaths.slice(0, MAX_FILES_PER_COMMIT);
-	const skippedFiles = filePaths.length - limitedFiles.length;
-
-	const fileSnapshots = await Promise.all(
-		limitedFiles.map((filePath) => readFileSnapshot({ filePath, cwd })),
-	);
-
-	const fileSections = limitedFiles.map((filePath, index) => {
-		const extension = path.extname(filePath).replace(".", "");
-		const language = extension.length > 0 ? extension : "";
-		const content = fileSnapshots[index] ?? "";
-		const header = `#### ${filePath}`;
-		const fence = language.length > 0 ? language : "";
-		return `${header}\n\`\`\`${fence}\n${content}\n\`\`\``;
-	});
-
-	const skippedNote =
-		skippedFiles > 0
-			? `\n\n_${skippedFiles} files not shown (limit ${MAX_FILES_PER_COMMIT})._`
-			: "";
-	const filesSection = fileSections.length
-		? `### Related files (current workspace)\n\n${fileSections.join("\n\n")}${skippedNote}`
-		: `### Related files (current workspace)\n\n_No related files found._`;
-
-	return [
+	const sectionLines = [
 		`## Commit ${commit.shortSha} ${commit.subject}`,
 		`Author: ${commit.author}`,
 		`Date: ${commit.date}`,
@@ -285,23 +274,36 @@ const buildCommitSection = async ({ commit, cwd, exec, signal }: BuildCommitSect
 		"",
 		"### Diff",
 		"```diff",
-		diffText,
+		diff.text,
 		"```",
-		"",
-		filesSection,
-	].join("\n");
+	];
+
+	if (diffNotice) {
+		sectionLines.push(diffNotice);
+	}
+
+	return { section: sectionLines.join("\n"), diffLinesUsed: diff.usedLines };
 };
 
 const buildContext = async ({ commits, cwd, exec, signal }: BuildContextOptions): Promise<string> => {
 	const sections: string[] = [];
+	let remainingDiffLines = MAX_DIFF_LINES;
+
 	sections.push(
-		"Study these commits. Read the diffs and the related file snapshots (current workspace).",
+		`Study these commits. Analyze what changed from the diffs. Diff line cap: ${MAX_DIFF_LINES}.`,
 		"",
 	);
 
 	for (const commit of commits) {
 		if (signal?.aborted) break;
-		const section = await buildCommitSection({ commit, cwd, exec, signal });
+		const { section, diffLinesUsed } = await buildCommitSection({
+			commit,
+			cwd,
+			exec,
+			signal,
+			remainingDiffLines,
+		});
+		remainingDiffLines = Math.max(0, remainingDiffLines - diffLinesUsed);
 		sections.push(section, "");
 	}
 
@@ -315,7 +317,7 @@ const ensureGitRepo = async ({ exec, cwd }: { exec: ExecFn; cwd: string }): Prom
 
 export default function (pi: ExtensionAPI) {
 	pi.registerCommand("study-commits", {
-		description: "Select recent commits and inject diffs + related file snapshots",
+		description: "Select recent commits and inject diffs",
 		handler: async (_args, ctx) => {
 			if (!ctx.hasUI) {
 				ctx.ui.notify("study-commits requires interactive mode", "error");
