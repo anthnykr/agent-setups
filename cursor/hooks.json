@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterFileEdit": [
+      {
+        "command": "python3 \"$HOME/.cursor/hooks/review-implementation-mark-edit.py\""
+      }
+    ],
+    "stop": [
+      {
+        "command": "python3 \"$HOME/.cursor/hooks/review-implementation-stop.py\""
+      }
+    ]
+  }
+}
