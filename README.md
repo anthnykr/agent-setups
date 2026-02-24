@@ -19,7 +19,6 @@ Core files in [`cursor/hooks`](cursor/hooks):
 | [`review-implementation-mark-edit.py`](cursor/hooks/review-implementation-mark-edit.py) | Marks the current response turn when an edit occurs. |
 | [`review-implementation-stop.py`](cursor/hooks/review-implementation-stop.py) | On completion, prompts for a quick implementation self-review if an edit marker exists. |
 | [`review_implementation_helpers.py`](cursor/hooks/review_implementation_helpers.py) | Shared helper logic (session/turn extraction and marker management). |
-| [`review-implementation.json`](cursor/hooks/review-implementation.json) | Hook config placeholder/template file. |
 
 Quick copy command:
 
