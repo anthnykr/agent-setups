@@ -8,12 +8,6 @@ Pi package for studying recent git commits from inside pi.
 pi install npm:@anthnykr/pi-study-commits
 ```
 
-Or test locally:
-
-```bash
-pi -e ./study-commits.ts
-```
-
 ## Commands
 
 ### `/study-commits`
@@ -54,14 +48,3 @@ Precedence:
 - caps total diff context at 4000 lines
 - sends the assembled context back into the session as a user message
 
-## Publish
-
-```bash
-npm publish --access public
-```
-
-Dry run first:
-
-```bash
-npm run pack:check
-```
