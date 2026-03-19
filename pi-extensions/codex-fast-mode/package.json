@@ -1,17 +1,18 @@
 {
   "name": "@anthnykr/pi-codex-fast-mode",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Pi extension that adds a fast-mode toggle for supported OpenAI Codex models.",
   "type": "module",
   "author": "Anthony Kroeger",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/anthnykr/pi-codex-fast-mode.git"
+    "url": "https://github.com/anthnykr/agent-setups.git",
+    "directory": "pi-extensions/codex-fast-mode"
   },
-  "homepage": "https://github.com/anthnykr/pi-codex-fast-mode#readme",
+  "homepage": "https://github.com/anthnykr/agent-setups/tree/main/pi-extensions/codex-fast-mode#readme",
   "bugs": {
-    "url": "https://github.com/anthnykr/pi-codex-fast-mode/issues"
+    "url": "https://github.com/anthnykr/agent-setups/issues"
   },
   "keywords": [
     "pi-package",

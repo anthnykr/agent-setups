@@ -1,13 +1,13 @@
 {
   "name": "@anthnykr/pi-study-commits",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Pi extension for selecting recent git commits and injecting their diffs into the conversation.",
   "type": "module",
   "license": "MIT",
   "author": "Anthony Kroeger",
   "repository": {
     "type": "git",
-    "url": "https://github.com/anthnykr/agent-setups.git",
+    "url": "git+https://github.com/anthnykr/agent-setups.git",
     "directory": "pi-extensions/study-commits"
   },
   "homepage": "https://github.com/anthnykr/agent-setups/tree/main/pi-extensions/study-commits#readme",

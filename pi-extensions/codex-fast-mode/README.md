@@ -9,7 +9,7 @@ Pi extension package for toggling OpenAI Codex fast mode on supported models.
 
 - adds a `/fast` command in Pi
 - persists the fast-mode toggle across sessions
-- marks the footer when fast mode is enabled
+- adds a small `fast` status badge while keeping Pi's built-in footer intact
 - injects `service_tier: "priority"` for supported `openai-codex` `gpt-5.4*` models
 
 ## Install
@@ -43,3 +43,4 @@ If those conditions do not match, the extension leaves provider requests unchang
 ## Security
 
 Pi extensions run with your full user permissions. Only install packages you trust.
+.
