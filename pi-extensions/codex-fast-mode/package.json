@@ -1,0 +1,55 @@
+{
+  "name": "@anthnykr/pi-codex-fast-mode",
+  "version": "0.1.0",
+  "description": "Pi extension that adds a fast-mode toggle for supported OpenAI Codex models.",
+  "type": "module",
+  "author": "Anthony Kroeger",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthnykr/pi-codex-fast-mode.git"
+  },
+  "homepage": "https://github.com/anthnykr/pi-codex-fast-mode#readme",
+  "bugs": {
+    "url": "https://github.com/anthnykr/pi-codex-fast-mode/issues"
+  },
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "pi",
+    "codex",
+    "openai",
+    "terminal"
+  ],
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE",
+    "eslint.config.js",
+    "tsconfig.json"
+  ],
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*"
+  },
+  "devDependencies": {
+    "@mariozechner/pi-coding-agent": "^0.60.0",
+    "@types/node": "^24.5.2",
+    "@typescript-eslint/eslint-plugin": "^8.39.1",
+    "@typescript-eslint/parser": "^8.39.1",
+    "eslint": "^9.36.0",
+    "typescript": "^5.9.2"
+  },
+  "scripts": {
+    "lint": "eslint --max-warnings=0 src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run lint && npm run typecheck"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
